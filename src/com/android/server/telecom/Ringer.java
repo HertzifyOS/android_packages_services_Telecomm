@@ -363,19 +363,22 @@ public class Ringer {
         mNotificationManager = notificationManager;
         mAccessibilityManagerAdapter = accessibilityManagerAdapter;
         mAnomalyReporter = anomalyReporter;
-        mUseSimplePattern = mContext.getResources().getBoolean(R.bool.use_simple_vibration_pattern);
-        mVibrationPattern = Settings.System.getIntForUser(mContext.getContentResolver(),
-            Settings.System.RINGTONE_VIBRATION_PATTERN, 0, UserHandle.USER_CURRENT);
+        int useSimplePatternId = mContext.getResources().getIdentifier(
+                "use_simple_vibration_pattern", "bool", mContext.getPackageName());
+        mUseSimplePattern = useSimplePatternId != 0
+                && mContext.getResources().getBoolean(useSimplePatternId);
+        mVibrationPattern = Settings.System.getInt(mContext.getContentResolver(),
+            "ringtone_vibration_pattern", 0);
 
         updateVibrationPattern();
 
         mSettingObserver = new SettingsObserver(mH);
         mContext.getContentResolver().registerContentObserver(
-            Settings.System.getUriFor(Settings.System.RINGTONE_VIBRATION_PATTERN),
-            true, mSettingObserver, UserHandle.USER_CURRENT);
+            Settings.System.getUriFor("ringtone_vibration_pattern"),
+            true, mSettingObserver);
         mContext.getContentResolver().registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_RINGTONE_VIBRATION_PATTERN),
-            true, mSettingObserver, UserHandle.USER_CURRENT);
+            Settings.System.getUriFor("custom_ringtone_vibration_pattern"),
+            true, mSettingObserver);
 
         mIsHapticPlaybackSupportedByDevice =
                 mSystemSettingsUtil.isHapticPlaybackSupported(mContext);
@@ -385,7 +388,7 @@ public class Ringer {
         Resources res = mContext.getResources();
         int resourceId = Resources.getSystem().getIdentifier(
                 "config_ringtoneVibrationSettingsSupported", "bool", "android");
-        mRingtoneVibrationSupported = res.getBoolean(resourceId);
+        mRingtoneVibrationSupported = resourceId != 0 && res.getBoolean(resourceId);
         mCallConnectedIndicatorSettings = callConnectedIndicator;
         mAsyncTaskExecutor = asyncTaskExecutor;
         mCrsAudioController = crsAudioController;
@@ -1064,8 +1067,8 @@ public class Ringer {
     }
 
     private void updateVibrationPattern() {
-        mVibrationPattern = Settings.System.getIntForUser(mContext.getContentResolver(),
-            Settings.System.RINGTONE_VIBRATION_PATTERN, 0, UserHandle.USER_CURRENT);
+        mVibrationPattern = Settings.System.getInt(mContext.getContentResolver(),
+            "ringtone_vibration_pattern", 0);
         if (mUseSimplePattern) {
             switch (mVibrationPattern) {
                 case 1:
@@ -1085,10 +1088,9 @@ public class Ringer {
                         SEVEN_ELEMENTS_VIBRATION_AMPLITUDE, REPEAT_SIMPLE_VIBRATION_AT);
                     break;
                 case 5:
-                    String customVibValue = Settings.System.getStringForUser(
+                    String customVibValue = Settings.System.getString(
                             mContext.getContentResolver(),
-                            Settings.System.CUSTOM_RINGTONE_VIBRATION_PATTERN,
-                            UserHandle.USER_CURRENT);
+                            "custom_ringtone_vibration_pattern");
                     String[] customVib = new String[3];
                     if (customVibValue != null && !customVibValue.equals("")) {
                         customVib = customVibValue.split(",", 3);
